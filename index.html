@@ -1,0 +1,470 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style>html{color-scheme:light}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}</style><title>Cell Energy Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column; header with session score; tabs: Learn (study sheet with an interactive ATP model), Multiple choice, Vocab, Equations, Sort it, Explain it */
+:root{
+  --bg:#EEF3EF; --surface:#FFFFFF; --sunk:#F5F8F5; --ink:#15201A; --muted:#5A6A60; --line:#D9E2DB;
+  --accent:#23784A; --accent-soft:#E0F0E6; --accent-ink:#FFFFFF; --warm:#B4610E; --warm-soft:#F8E9D6;
+  --good:#1E7A3C; --good-soft:#E0F2E6; --bad:#B42318; --bad-soft:#FBE4E1; --warn:#9A6700; --warn-soft:#F7EDD3;
+  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1511; --surface:#17201A; --sunk:#131A15; --ink:#E6EEE8; --muted:#97A89C; --line:#2A362E;
+  --accent:#6CCB93; --accent-soft:#183324; --accent-ink:#0B1A11; --warm:#F0A55A; --warm-soft:#3A2814;
+  --good:#5FC27D; --good-soft:#15301F; --bad:#F2776C; --bad-soft:#3D1C1A; --warn:#E3B54B; --warn-soft:#3A2F14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1511; --surface:#17201A; --sunk:#131A15; --ink:#E6EEE8; --muted:#97A89C; --line:#2A362E;
+  --accent:#6CCB93; --accent-soft:#183324; --accent-ink:#0B1A11; --warm:#F0A55A; --warm-soft:#3A2814;
+  --good:#5FC27D; --good-soft:#15301F; --bad:#F2776C; --bad-soft:#3D1C1A; --warn:#E3B54B; --warn-soft:#3A2F14; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{padding-block:28px 18px}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.eyebrow{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{margin:2px 0 0;font-family:var(--display);font-weight:800;letter-spacing:-.025em;font-size:clamp(30px,6vw,40px);line-height:1.05}
+.tally{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
+.tally b{display:block;font-size:26px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.tally button{border:0;background:none;color:var(--muted);font:12px var(--mono);text-decoration:underline;cursor:pointer;padding:0}
+nav.tabs{display:flex;gap:4px;padding:4px;background:var(--sunk);border:1px solid var(--line);border-radius:12px;overflow-x:auto}
+nav.tabs button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);font:600 15px var(--body);padding:10px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+main{padding-block:16px 48px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 14px var(--body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.count{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px clamp(16px,4vw,28px);display:grid;gap:14px;min-width:0}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0}
+.label .again{color:var(--warn)}
+.q{font-size:clamp(18px,3.4vw,22px);font-weight:600;line-height:1.4;margin:0}
+.q .hint{display:block;font-size:15px;font-weight:500;color:var(--muted);margin-top:4px}
+.eqn{font-family:var(--mono);font-size:clamp(16px,3.2vw,20px);font-weight:600;letter-spacing:.01em}
+.blank{display:inline-block;min-width:3.4em;border-bottom:2.5px solid var(--accent);text-align:center;color:var(--accent)}
+.tip{font-size:14px;color:var(--muted);margin:0}
+.choices{display:grid;gap:8px}
+.choice{display:flex;gap:12px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);font:500 17px var(--body);padding:12px 14px;border-radius:10px;cursor:pointer}
+.choice:hover:not([disabled]){border-color:var(--accent)}
+.choice .k{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;flex:none}
+.choice.right{border-color:var(--good);background:var(--good-soft)} .choice.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.choice[disabled]{cursor:default}
+input[type=text],textarea{width:100%;font:500 18px var(--body);color:var(--ink);background:var(--sunk);border:1.5px solid var(--line);border-radius:10px;padding:11px 13px}
+textarea{min-height:150px;resize:vertical;line-height:1.5;font-size:17px}
+input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 15px var(--body);padding:9px 16px;border-radius:10px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border-color:transparent;color:var(--muted);padding-inline:8px}
+button:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+.kbd{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:4px}
+.fb p{margin:0}
+.fb.ok{background:var(--good-soft)} .fb.no{background:var(--bad-soft)} .fb.mid{background:var(--warn-soft)}
+.fb strong{font-size:15px} .fb.ok strong{color:var(--good)} .fb.no strong{color:var(--bad)} .fb.mid strong{color:var(--warn)}
+.fb .ans{font-size:18px;font-weight:700}
+.fb .why{font-size:15px;color:var(--muted)}
+.subs{display:flex;flex-wrap:wrap;gap:5px}
+.subs button{min-width:36px;height:32px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 15px var(--mono);border-radius:7px;cursor:pointer}
+/* learn */
+.learn{display:grid;gap:14px}
+.learn h2{margin:0;font:700 20px var(--display);letter-spacing:-.01em}
+.learn h3{margin:4px 0 0;font:700 16px var(--display)}
+.learn p{margin:0}
+.learn ul{margin:0;padding-left:20px}
+.bigeq{font-family:var(--mono);font-weight:700;font-size:clamp(14px,3.2vw,18px);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.bigeq small{display:block;font-family:var(--body);font-weight:500;font-size:14px;color:var(--muted);white-space:normal;margin-top:4px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+td,th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.def{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr);gap:4px 14px;padding:7px 0;border-top:1px solid var(--line);font-size:15px}
+@media (max-width:480px){.def{grid-template-columns:minmax(0,1fr)}}
+.atp svg{width:100%;max-width:560px;height:auto;display:block;margin:0 auto}
+.atp .state{font-weight:700}
+.extra{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px}
+/* explain */
+.ideas{display:grid;gap:6px;font-size:15px}
+.idea{display:flex;gap:8px;align-items:flex-start}
+.idea i{font-style:normal;font-weight:700;width:18px;flex:none}
+.idea.hit i{color:var(--good)} .idea.miss i{color:var(--bad)}
+.model{background:var(--sunk);border-radius:10px;padding:12px 14px;font-size:15px}
+@media (max-width:560px){.tally{text-align:left;width:100%}}
+@media (prefers-reduced-motion:no-preference){.fb{animation:pop .18s ease-out}@keyframes pop{from{transform:translateY(3px);opacity:.4}to{transform:none;opacity:1}}
+ .atp .p3{transition:transform .5s ease,opacity .5s ease}}
+</style></head><body>
+
+<header class="top">
+  <div class="wrap head">
+    <div>
+      <p class="eyebrow">Biology · Chapters 8 &amp; 9</p>
+      <h1>Cell Energy Lab</h1>
+    </div>
+    <div class="tally"><b id="tally">0 / 0</b>right this session · <button id="reset">reset</button></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-learn" data-tab="learn" aria-selected="true">Learn</button>
+    <button role="tab" id="tab-mc" data-tab="mc" aria-selected="false">Multiple choice</button>
+    <button role="tab" id="tab-vocab" data-tab="vocab" aria-selected="false">Vocab</button>
+    <button role="tab" id="tab-eq" data-tab="eq" aria-selected="false">Equations</button>
+    <button role="tab" id="tab-sort" data-tab="sort" aria-selected="false">Sort it</button>
+    <button role="tab" id="tab-explain" data-tab="explain" aria-selected="false">Explain it</button>
+  </nav>
+</div>
+
+<main class="wrap">
+  <section id="pane-learn" role="tabpanel" aria-labelledby="tab-learn"><div class="learn" id="learn"></div></section>
+  <section id="pane-mc" role="tabpanel" aria-labelledby="tab-mc" hidden><div class="bar"><div class="chips" id="mc-chips"></div><span class="count" id="mc-count"></span></div><div id="mc-card"></div></section>
+  <section id="pane-vocab" role="tabpanel" aria-labelledby="tab-vocab" hidden><div class="bar"><div class="chips" id="vocab-chips"></div><span class="count" id="vocab-count"></span></div><div id="vocab-card"></div></section>
+  <section id="pane-eq" role="tabpanel" aria-labelledby="tab-eq" hidden><div class="bar"><div class="chips" id="eq-chips"></div><span class="count" id="eq-count"></span></div><div id="eq-card"></div></section>
+  <section id="pane-sort" role="tabpanel" aria-labelledby="tab-sort" hidden><div class="bar"><div class="chips" id="sort-chips"></div><span class="count" id="sort-count"></span></div><div id="sort-card"></div></section>
+  <section id="pane-explain" role="tabpanel" aria-labelledby="tab-explain" hidden><div class="bar"><div class="chips" id="ex-chips"></div><span class="count" id="ex-count"></span></div><div id="ex-card"></div></section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const uniq=a=>[...new Set(a)];
+const store={get(k,d){try{const v=localStorage.getItem('energy:'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('energy:'+k,JSON.stringify(v));}catch(e){}}};
+
+/* ================= DATA ================= */
+// [term, definition, aliases, on the objective sheet?]
+const VOCAB=[
+ ['Autotroph','An organism that makes its own food, usually from sunlight by photosynthesis, like plants, algae, and some bacteria.',['autotrophs','producer'],1],
+ ['Heterotroph','An organism that cannot make its own food and gets energy by eating other organisms, like animals and fungi.',['heterotrophs','consumer'],1],
+ ['ATP','Adenosine triphosphate: the cell’s main energy molecule. It has 3 phosphate groups, and breaking off the third one releases energy the cell can use.',['adenosine triphosphate'],1],
+ ['ADP','Adenosine diphosphate: ATP after it has lost a phosphate and released its energy. It has 2 phosphate groups and can be recharged into ATP.',['adenosine diphosphate'],1],
+ ['Chloroplast','The organelle in plant and algae cells where photosynthesis happens. It contains the green pigment chlorophyll.',['chloroplasts'],1],
+ ['Mitochondria','The organelles where aerobic cellular respiration happens, turning the energy in glucose into ATP. The “powerhouse of the cell.”',['mitochondrion','mitochondrias'],1],
+ ['Aerobic respiration','Cellular respiration that uses oxygen. It breaks glucose down completely in the mitochondria and makes about 36 ATP per glucose.',['aerobic'],1],
+ ['Anaerobic respiration','Breaking down glucose without oxygen (glycolysis plus fermentation). It happens in the cytoplasm and makes only 2 ATP per glucose.',['anaerobic','fermentation'],1],
+ ['Chlorophyll','The green pigment in chloroplasts that absorbs light energy for photosynthesis.',[],0],
+ ['Thylakoid','Flattened sacs inside the chloroplast where the light-dependent reactions happen. A stack of them is a granum.',['thylakoids','grana','granum'],0],
+ ['Stroma','The fluid inside the chloroplast around the thylakoids, where the Calvin cycle makes glucose.',[],0],
+ ['Light-dependent reactions','The first stage of photosynthesis, in the thylakoids: light energy splits water, releases oxygen, and makes ATP and NADPH.',['light dependent reactions','light reactions'],0],
+ ['Calvin cycle','The second stage of photosynthesis, in the stroma: uses ATP, NADPH, and CO₂ to build glucose. It doesn’t need light directly.',['light-independent reactions','light independent reactions','dark reactions','calvin'],0],
+ ['Glycolysis','The first step of cellular respiration, in the cytoplasm: splits glucose into 2 pyruvic acid and makes 2 ATP. It doesn’t need oxygen.',[],0],
+ ['Krebs cycle','The second stage of aerobic respiration, in the mitochondria: breaks pyruvic acid down further and releases CO₂.',['citric acid cycle','krebs'],0],
+ ['Electron transport chain','The last stage of aerobic respiration, in the inner membrane of the mitochondria. It uses oxygen and makes most of the ATP.',['etc','electron transport'],0],
+ ['Fermentation','Making ATP without oxygen by continuing after glycolysis. Two types: lactic acid (muscles) and alcoholic (yeast).',[],0],
+ ['Lactic acid fermentation','Fermentation in muscle cells when oxygen runs low; makes lactic acid, which causes the burning feeling during hard exercise.',['lactic acid'],0],
+ ['Alcoholic fermentation','Fermentation in yeast that makes ethyl alcohol and CO₂. It makes bread rise.',['alcohol fermentation'],0],
+];
+const PH={left:[[6,'co2'],[6,'h2o']],right:[[1,'c6h12o6'],[6,'o2']]};
+const RS={left:[[1,'c6h12o6'],[6,'o2']],right:[[6,'co2'],[6,'h2o']]};
+const SHOW={co2:'CO₂',h2o:'H₂O',c6h12o6:'C₆H₁₂O₆',o2:'O₂'};
+const NAME={co2:'carbon dioxide',h2o:'water',c6h12o6:'glucose',o2:'oxygen'};
+const fmt=([c,sp])=>`${c>1?c:''}${SHOW[sp]}`;
+
+/* ================= grading helpers ================= */
+const SUB={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+const clean=s=>String(s).toLowerCase().replace(/[’`]/g,"'").replace(/[₀-₉]/g,d=>SUB[d]).replace(/\s+/g,' ').replace(/^[\s.!?,;:]+|[\s.!?,;:]+$/g,'').trim();
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
+const ENERGY=['energy','atp','light','sunlight','lightenergy','sunlightenergy','energyatp','atpenergy','heat','energyfromsunlight','energy(atp)','atp(energy)','light(energy)'];
+function term(t){ let x=clean(t).replace(/[\s()]/g,''); if(!x) return null;
+  const m=x.match(/^(\d*)(.*)$/); let c=m[1]?+m[1]:1, sp=m[2];
+  const map={carbondioxide:'co2',co2:'co2',water:'h2o',h2o:'h2o',glucose:'c6h12o6',sugar:'c6h12o6',c6h12o6:'c6h12o6',oxygen:'o2',o2:'o2',oxygengas:'o2'};
+  if(ENERGY.includes(sp)||ENERGY.includes(x)) return {e:true};
+  if(!(sp in map)) return {bad:sp};
+  return {c,sp:map[sp]}; }
+function side(str){ return str.split('+').map(term).filter(Boolean); }
+function eqCheck(expect){ return typed=>{
+  const parts=clean(typed).split(/-+>|=+>|→|=/); if(parts.length!==2) return {r:'no',msg:'Write it as reactants → products (type -> for the arrow).'};
+  const L=side(parts[0]).filter(t=>!t.e), R=side(parts[1]).filter(t=>!t.e);
+  if([...L,...R].some(t=>t.bad)) return {r:'no',msg:'One of the terms isn’t a molecule in this equation.'};
+  const key=a=>a.map(t=>t.c+t.sp).sort().join('+'), sp=a=>a.map(t=>t.sp).sort().join('+');
+  const eL=expect.left.map(([c,s])=>({c,sp:s})), eR=expect.right.map(([c,s])=>({c,sp:s}));
+  if(key(L)===key(eL)&&key(R)===key(eR)) return {r:'ok'};
+  if(sp(L)===sp(eR)&&sp(R)===sp(eL)) return {r:'no',msg:'You flipped the sides: reactants and products are swapped.'};
+  if(sp(L)===sp(eL)&&sp(R)===sp(eR)) return {r:'no',msg:'Right molecules, wrong numbers. Check the 6’s (coefficients).'};
+  return {r:'no',msg:'Some molecules are missing or on the wrong side.'}; }; }
+function termCheck(expect){ return typed=>{ const t=term(typed);
+  if(expect==='e') return t&&t.e?{r:'ok'}:{r:'no'};
+  if(!t||t.e||t.bad) return {r:'no'};
+  if(t.sp!==expect[1]) return {r:'no'};
+  if(t.c!==expect[0]) return {r:'no',msg:expect[0]===1?'Glucose has no coefficient in front (just 1).':`Right molecule, but it needs the coefficient ${expect[0]}.`};
+  return {r:'ok'}; }; }
+function check(it,typed){
+  if(it.check){ const r=it.check(typed); return r; }
+  const t=clean(typed), alts=it.ans.map(clean);
+  if(alts.includes(t)) return {r:'ok'};
+  if(alts.some(a=>a.length>5&&lev(a,t)<=(a.length>12?2:1))) return {r:'ok',msg:'Watch the spelling.'};
+  return {r:'no'}; }
+
+/* ================= UI pieces ================= */
+let TALLY=store.get('tally',{r:0,t:0});
+const drawTally=()=>{$('#tally').textContent=`${TALLY.r} / ${TALLY.t}`;};
+const bump=(ok,undo)=>{ if(undo){TALLY.r++;} else {TALLY.t++; if(ok) TALLY.r++;} store.set('tally',TALLY); drawTally(); };
+$('#reset').onclick=()=>{TALLY={r:0,t:0};store.set('tally',TALLY);drawTally();}; drawTally();
+function chips(id,opts,k,onChange){ let cur=store.get(k,Object.keys(opts)[0]); if(!(cur in opts)) cur=Object.keys(opts)[0];
+  const draw=()=>{ $('#'+id).innerHTML=Object.entries(opts).map(([x,l])=>`<button class="chip" data-k="${x}" aria-pressed="${String(cur)===String(x)}">${l}</button>`).join('');
+    document.querySelectorAll('#'+id+' .chip').forEach(c=>c.onclick=()=>{ cur=c.dataset.k; store.set(k,cur); draw(); onChange(); }); };
+  draw(); return ()=>cur; }
+function mc(q,a,pool,why,label,fixed){ const d=shuffle(uniq(pool).filter(x=>x!==a)).slice(0,3); return {q,a,choices:fixed?[...fixed]:shuffle([a,...d]),why,label}; }
+const typed=(q,ans,why,label,extra={})=>({q,ans:Array.isArray(ans)?ans:[ans],why,label,...extra});
+const blank='<span class="blank">___</span>';
+const subsBar=`<div class="subs" aria-label="Quick insert">${['₂','₆','₁₂','→','+'].map(c=>`<button type="button" data-c="${c==='→'?' → ':c==='+'?' + ':c}" tabindex="-1">${c}</button>`).join('')}</div>`;
+
+/* ================= drill engine ================= */
+let ACTIVE=null;
+function drill(id,gens){
+  const getK=chips(id+'-chips',Object.fromEntries(Object.entries(gens).map(([k,g])=>[k,g.label])),id+'K',()=>{S.pending=[];S.r=0;S.t=0;next();});
+  const S={pending:[],cur:null,state:'ask',typed:'',res:null,r:0,t:0,last:''};
+  const gen=()=>{ let k=getK(); if(k==='mix') k=pick(Object.keys(gens).filter(x=>x!=='mix')); for(let i=0;i<12;i++){ const it=gens[k].fn(); if(it.q!==S.last) return it; } return gens[k].fn(); };
+  function next(){ S.pending.forEach(p=>p.w--); const d=S.pending.findIndex(p=>p.w<=0); let it;
+    if(d>=0){ it={...S.pending.splice(d,1)[0].it,again:true}; if(it.choices&&!it.fixed) it.choices=shuffle(it.choices); } else it=gen();
+    S.cur=it; S.last=it.q; S.state='ask'; S.typed=''; S.res=null; S.pick=null; render(); }
+  function finish(ok){ S.t++; if(ok) S.r++; else S.pending.push({it:S.cur,w:3}); bump(ok); S.state='done'; render(); }
+  function render(){ const it=S.cur, el=$('#'+id+'-card'), done=S.state==='done';
+    $('#'+id+'-count').textContent=`${S.r} / ${S.t}${S.pending.length?` · ${S.pending.length} coming back`:''}`;
+    let body='';
+    if(it.choices){ body=`<div class="choices">${it.choices.map((c,i)=>{ let cls=''; if(done){ if(c===it.a) cls='right'; else if(c===S.pick) cls='wrong'; }
+        return `<button class="choice ${cls}" data-i="${i}" ${done?'disabled':''}><span class="k">${i+1}</span><span>${c}</span></button>`; }).join('')}</div>`; }
+    else { body=`<label for="${id}-in" style="position:absolute;left:-9999px">Your answer</label><input type="text" id="${id}-in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${it.ph||'Type your answer'}" value="${esc(S.typed)}" ${done?'readonly':''}>${it.subs&&!done?subsBar:''}`; }
+    let fb='';
+    if(done){ const r=S.res||{}, ok=r.r==='ok'||r.r==='over';
+      const head= r.r==='ok'?(r.msg?'Right. '+r.msg:'Right.'): r.r==='over'?'Counted as right.': r.r==='skip'?'Here it is:':'Not quite.';
+      const ans=it.choices?it.a:it.show||it.ans.join(' · ');
+      fb=`<div class="fb ${ok?'ok':'no'}"><strong>${head}</strong>${r.msg&&!ok?`<p>${r.msg}</p>`:''}${(!ok||!it.choices)?`<p class="ans">${it.choices||it.show?ans:esc(ans)}</p>`:''}${it.why?`<p class="why">${it.why}</p>`:''}${!ok?'<p class="why">This one comes back in a few questions.</p>':''}</div>`; }
+    const btns= done? `<button class="btn primary" id="${id}-next">Next</button>${!it.choices&&S.res&&S.res.r==='no'?`<button class="btn ghost" id="${id}-over">I was right, count it</button>`:''}<span class="kbd">Enter</span>`
+      : it.choices? `<span class="kbd">Press 1–${it.choices.length}</span>` : `<button class="btn primary" id="${id}-check">Check</button><button class="btn ghost" id="${id}-skip">Show me</button><span class="kbd">Enter</span>`;
+    el.innerHTML=`<div class="card"><p class="label">${it.again?'<span class="again">↻ again · </span>':''}${it.label||''}</p><p class="q">${it.q}</p>${body}${fb}<div class="row">${btns}</div></div>`;
+    if(it.choices&&!done) el.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(+b.dataset.i));
+    if(!it.choices&&!done){ const inp=$('#'+id+'-in'); inp.focus(); inp.oninput=()=>S.typed=inp.value;
+      inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } };
+      el.querySelectorAll('.subs button').forEach(b=>{ b.onmousedown=e=>e.preventDefault(); b.onclick=()=>{ const s=inp.selectionStart??inp.value.length, en=inp.selectionEnd??s; inp.value=inp.value.slice(0,s)+b.dataset.c+inp.value.slice(en); const p=s+b.dataset.c.length; inp.setSelectionRange(p,p); S.typed=inp.value; inp.focus(); }; });
+      $('#'+id+'-check').onclick=submit; $('#'+id+'-skip').onclick=()=>{ S.res={r:'skip'}; finish(false); }; }
+    if(done){ const n=$('#'+id+'-next'); n.onclick=next; n.focus(); const o=$('#'+id+'-over'); if(o) o.onclick=()=>{ S.res={r:'over'}; S.r++; S.pending.pop(); bump(true,true); render(); }; }
+  }
+  function submit(){ if(!S.typed.trim()){ $('#'+id+'-in').focus(); return; } S.res=check(S.cur,S.typed); finish(S.res.r==='ok'); }
+  function choose(i){ if(S.state!=='ask') return; S.pick=S.cur.choices[i]; S.res={r:S.pick===S.cur.a?'ok':'no'}; finish(S.res.r==='ok'); }
+  return {next,onKey:e=>{ if(S.state==='ask'&&S.cur.choices&&/^[1-9]$/.test(e.key)&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){ const i=+e.key-1; if(i<S.cur.choices.length){ e.preventDefault(); choose(i);} } }};
+}
+
+/* ================= question banks ================= */
+const B=(q,a,w,why)=>[q,a,w,why||''];
+const ATPQ=[
+ B('How many phosphate groups does ATP have?','3',['2','1','6'],'ATP = adenosine TRIphosphate (tri = 3).'),
+ B('How many phosphate groups does ADP have?','2',['3','1','6'],'ADP = adenosine DIphosphate (di = 2).'),
+ B('What happens when ATP loses its third phosphate?','Energy is released and it becomes ADP',['Energy is stored and it becomes glucose','It becomes ATP again','Oxygen is released'],'ATP → ADP + P + energy.'),
+ B('How does ADP turn back into ATP?','A phosphate is added using energy (from respiration)',['A phosphate is removed','It absorbs oxygen','It splits glucose by itself'],'ADP + P + energy → ATP. The energy comes from breaking down glucose.'),
+ B('ATP is like a fully charged battery. ADP is like…','a partly drained battery that can be recharged',['a broken battery','a power outlet','a fully charged battery too'],''),
+ B('Where is the energy in ATP stored?','In the chemical bond holding the last phosphate',['In the adenosine','In the oxygen atoms','In the cell membrane'],''),
+ B('Why is ATP important to the cell?','It is the energy molecule the cell spends to do work',['It stores the cell’s DNA','It makes the cell wall','It carries oxygen in the blood'],'ATP powers active transport, muscle movement, building proteins, and more.'),
+ B('Which of these does a cell use ATP for?','Active transport through the membrane',['Diffusion','Osmosis','Absorbing sunlight'],'Active transport moves things against the concentration gradient, so it needs energy (ATP). Diffusion and osmosis are passive.'),
+ B('How are ATP and glucose related?','Cellular respiration breaks down glucose to make ATP',['ATP is broken down to make glucose in animals','They are the same molecule','Glucose is made from ADP'],''),
+ B('Why don’t cells store lots of energy as ATP?','ATP holds only a little energy; glucose stores much more long-term',['ATP is too heavy','ATP is poisonous','ATP can only be made at night'],'A glucose molecule stores far more energy than one ATP. Cells keep only a small supply of ATP and remake it as needed.'),
+ B('About how many ATP does aerobic respiration make from one glucose?','About 36',['2','6','100'],''),
+];
+const PHQ=[
+ B('Where does photosynthesis take place?','In chloroplasts',['In mitochondria','In the nucleus','In ribosomes'],''),
+ B('Which pigment captures light energy?','Chlorophyll',['Hemoglobin','ATP','Glucose'],''),
+ B('In plants, most photosynthesis happens in the…','leaves',['roots','flowers','seeds'],'Leaf cells are packed with chloroplasts.'),
+ B('Where do the light-dependent reactions happen?','Thylakoid membranes',['Stroma','Mitochondria','Cytoplasm'],''),
+ B('Where does the Calvin cycle make glucose?','Stroma',['Thylakoid','Mitochondria','Cell membrane'],''),
+ B('What are the reactants of photosynthesis?','Carbon dioxide and water (plus light)',['Glucose and oxygen','Oxygen and water','Glucose and carbon dioxide'],''),
+ B('What are the products of photosynthesis?','Glucose and oxygen',['Carbon dioxide and water','ATP and water','Oxygen and carbon dioxide'],''),
+ B('Where does the oxygen released by photosynthesis come from?','Water molecules being split',['Carbon dioxide','Glucose','The soil'],'Light energy splits water in the thylakoids, releasing O₂.'),
+ B('What is the energy source for photosynthesis?','Sunlight',['Glucose','Heat from the soil','Oxygen'],''),
+ B('Which organisms carry out photosynthesis?','Plants, algae, and some bacteria',['Only plants','Animals and fungi','All living things'],''),
+ B('Which kind of organism is an autotroph?','A plant',['A mushroom','A human','A lion'],''),
+ B('Why do plant leaves look green?','Chlorophyll reflects green light',['Chlorophyll absorbs green light','Glucose is green','Oxygen is green'],''),
+];
+const RSQ=[
+ B('Where does aerobic cellular respiration mostly take place?','In mitochondria',['In chloroplasts','In the nucleus','In the cell wall'],'Glycolysis happens in the cytoplasm, then the rest happens in the mitochondria.'),
+ B('What are the reactants of cellular respiration?','Glucose and oxygen',['Carbon dioxide and water','Light and water','ATP and ADP'],''),
+ B('What are the products of cellular respiration?','Carbon dioxide, water, and energy (ATP)',['Glucose and oxygen','Oxygen and water','Glucose and ATP'],''),
+ B('Which organisms carry out cellular respiration?','Both plants and animals (almost all living things)',['Only animals','Only plants','Only bacteria'],'Plants do both photosynthesis AND cellular respiration.'),
+ B('The first step of cellular respiration, which happens in the cytoplasm, is…','glycolysis',['the Calvin cycle','the Krebs cycle','fermentation'],''),
+ B('Which stage of aerobic respiration makes the most ATP?','Electron transport chain',['Glycolysis','Krebs cycle','Calvin cycle'],''),
+ B('How are photosynthesis and cellular respiration related?','The products of one are the reactants of the other',['They are the same process','Both only happen in animals','Both make glucose'],''),
+ B('Where does the CO₂ you breathe out come from?','Cellular respiration breaking down glucose',['Photosynthesis','The air you breathed in','ATP'],''),
+];
+const ANQ=[
+ B('What is the main difference between aerobic and anaerobic respiration?','Aerobic uses oxygen; anaerobic doesn’t',['Aerobic happens in plants only','Anaerobic makes more ATP','Aerobic doesn’t use glucose'],''),
+ B('How many ATP does anaerobic respiration (glycolysis + fermentation) make per glucose?','2',['36','0','12'],''),
+ B('Where does anaerobic respiration happen?','In the cytoplasm',['In the mitochondria','In the chloroplast','In the nucleus'],''),
+ B('What builds up in your muscles during a hard sprint?','Lactic acid',['Alcohol','Glucose','Chlorophyll'],'When oxygen runs low, muscles switch to lactic acid fermentation, causing the burn.'),
+ B('What does yeast make during alcoholic fermentation?','Alcohol and CO₂',['Lactic acid and O₂','Glucose and O₂','Only ATP'],'The CO₂ bubbles make bread rise.'),
+ B('Why does aerobic respiration make so much more ATP?','Oxygen lets glucose be broken down completely in the mitochondria',['It uses more glucose','It happens faster','It doesn’t need enzymes'],''),
+ B('A marathon runner at a steady pace mostly uses…','aerobic respiration',['anaerobic respiration only','photosynthesis','alcoholic fermentation'],''),
+];
+const BANKS={atp:ATPQ,ph:PHQ,rs:RSQ,an:ANQ};
+const LBL={atp:'ATP & ADP',ph:'Photosynthesis',rs:'Cellular respiration',an:'Aerobic vs anaerobic'};
+const fromBank=k=>()=>{ const [q,a,w,why]=pick(BANKS[k]); return mc(q,a,w,why,LBL[k]); };
+function vocabMC(){ const v=pick(VOCAB.filter(x=>x[3]||Math.random()<.35)); return Math.random()<.5? mc(esc(v[1]),v[0],VOCAB.map(x=>x[0]),'','Vocab') : mc(`What is <b>${esc(v[0])}</b>?`,v[1],VOCAB.map(x=>x[1]),'','Vocab'); }
+
+/* --- vocab typed --- */
+function vocabTyped(core){ return ()=>{ const pool=core?VOCAB.filter(v=>v[3]):VOCAB; const v=pick(pool);
+  return typed(esc(v[1]),[v[0],...v[2]],'',core?'Objective-sheet vocab':'All vocab',{show:esc(v[0]),ph:'Type the term'}); }; }
+
+/* --- equations --- */
+const eqStr=e=>`${e.left.map(fmt).join(' + ')} → ${e.right.map(fmt).join(' + ')}`;
+function eqFull(which){ return ()=>{ const P=which==='ph', e=P?PH:RS;
+  return typed(`Write the overall equation for <b>${P?'photosynthesis':'cellular respiration'}</b>.<span class="hint">Use formulas or names. Type -> for the arrow. ${P?'Light':'Energy (ATP)'} is optional.</span>`,[],P?'Light energy is the energy source that drives it. Plants make glucose and release oxygen.':'Glucose and oxygen are used up; carbon dioxide, water, and energy (ATP) come out.','Full equation',{check:eqCheck(e),subs:true,show:`<span class="eqn">${eqStr(e)}${P?'':' + energy (ATP)'}</span>${P?'<br><span class="why">(light energy drives it)</span>':''}`,ph:'6CO2 + 6H2O -> ...'}); }; }
+function eqBlank(){ const P=Math.random()<.5, e=P?PH:RS; const all=[...e.left.map(t=>['L',t]),...e.right.map(t=>['R',t]),['E','e']]; const [s,t]=pick(all);
+  const show=x=>x===t?blank:fmt(x);
+  let q=`${e.left.map(show).join(' + ')}${P?(t==='e'?` + ${blank}`:' + light'):''} → ${e.right.map(show).join(' + ')}${!P?(t==='e'?` + ${blank}`:' + energy'):''}`;
+  const ans=t==='e'?(P?'light energy':'energy (ATP)'):`${fmt(t)} (${t[0]>1?t[0]+' ':''}${NAME[t[1]]})`;
+  return typed(`<span class="eqn">${q}</span><span class="hint">${P?'Photosynthesis':'Cellular respiration'}: fill in the blank, with its number in front.</span>`,[],'',P?'Fill the blank · photosynthesis':'Fill the blank · respiration',{check:termCheck(t),subs:true,show:ans,ph:t==='e'?'Type it':'e.g. 6O2 or 6 oxygen'}); }
+function eqWord(){ const P=Math.random()<.5;
+  const qs=P?[['carbon dioxide + water → ___ + oxygen','glucose'],['carbon dioxide + ___ → glucose + oxygen','water'],['___ + water → glucose + oxygen','carbon dioxide'],['carbon dioxide + water → glucose + ___','oxygen']]
+           :[['glucose + ___ → carbon dioxide + water + energy','oxygen'],['___ + oxygen → carbon dioxide + water + energy','glucose'],['glucose + oxygen → ___ + water + energy','carbon dioxide'],['glucose + oxygen → carbon dioxide + ___ + energy','water']];
+  const [s,a]=pick(qs); return typed(`${s.replace('___',blank)}<span class="hint">${P?'Photosynthesis':'Cellular respiration'} word equation</span>`,[a,{glucose:'c6h12o6',water:'h2o','carbon dioxide':'co2',oxygen:'o2'}[a],'6'+{water:'h2o','carbon dioxide':'co2',oxygen:'o2'}[a]],'','Word equation'); }
+function eqMC(){ return pick([
+ ()=>mc('Which equation is photosynthesis?',eqStr(PH),[eqStr(RS),'6O₂ + 6H₂O → C₆H₁₂O₆ + 6CO₂','C₆H₁₂O₆ + 6CO₂ → 6O₂ + 6H₂O'],'CO₂ and water go IN, glucose and oxygen come OUT.','Recognize it'),
+ ()=>mc('Which equation is cellular respiration?',eqStr(RS),[eqStr(PH),'6CO₂ + 6O₂ → C₆H₁₂O₆ + 6H₂O','C₆H₁₂O₆ + 6H₂O → 6CO₂ + 6O₂'],'Glucose and oxygen go IN; CO₂, water, and energy come OUT.','Recognize it'),
+ ()=>mc('What is C₆H₁₂O₆?','Glucose',['Carbon dioxide','ATP','Chlorophyll'],'','Formulas'),
+ ()=>mc('How many molecules of CO₂ does photosynthesis use to make one glucose?','6',['1','2','12'],'','Formulas'),
+ ()=>mc('Compare the two equations. What do you notice?','One is the reverse of the other',['They are exactly the same','They share no molecules','Both make glucose'],'The products of photosynthesis are the reactants of respiration, and vice versa.','Compare')])(); }
+
+/* --- sort it --- */
+const PR=['Photosynthesis','Cellular respiration','Both'];
+const SORT_PR=[
+ ['Uses light energy','Photosynthesis'],['Releases carbon dioxide','Cellular respiration'],['Takes in carbon dioxide','Photosynthesis'],['Happens in mitochondria','Cellular respiration'],['Happens in chloroplasts','Photosynthesis'],
+ ['Makes glucose','Photosynthesis'],['Breaks down glucose','Cellular respiration'],['Produces oxygen','Photosynthesis'],['Uses oxygen','Cellular respiration'],['Stores energy in glucose','Photosynthesis'],
+ ['Releases energy as ATP','Cellular respiration'],['Happens in animal cells','Cellular respiration'],['Happens in plant cells','Both'],['Involves water','Both'],['Involves ATP','Both'],
+ ['Carried out by autotrophs only','Photosynthesis'],['Carried out by almost all living things','Cellular respiration'],['Includes the Calvin cycle','Photosynthesis'],['Includes glycolysis','Cellular respiration'],['Needs chlorophyll','Photosynthesis']];
+const AN=['Aerobic','Anaerobic'];
+const SORT_AN=[
+ ['Requires oxygen','Aerobic'],['Happens without oxygen','Anaerobic'],['Makes about 36 ATP per glucose','Aerobic'],['Makes only 2 ATP per glucose','Anaerobic'],['Takes place mostly in the mitochondria','Aerobic'],
+ ['Takes place in the cytoplasm','Anaerobic'],['Includes the Krebs cycle and electron transport chain','Aerobic'],['Includes fermentation','Anaerobic'],['Produces lactic acid in muscles','Anaerobic'],['Yeast making bread rise','Anaerobic'],
+ ['Breaks glucose down completely into CO₂ and H₂O','Aerobic'],['A 100-meter sprint with burning muscles','Anaerobic'],['Jogging slowly for an hour','Aerobic'],['Faster but much less efficient','Anaerobic']];
+const AH=['Autotroph','Heterotroph'];
+const SORT_AH=[['Oak tree','Autotroph'],['Grass','Autotroph'],['Algae','Autotroph'],['Seaweed','Autotroph'],['Moss','Autotroph'],['Cyanobacteria','Autotroph'],['Sunflower','Autotroph'],
+ ['Human','Heterotroph'],['Mushroom','Heterotroph'],['Cow','Heterotroph'],['Lion','Heterotroph'],['Yeast','Heterotroph'],['Deer','Heterotroph'],['Shark','Heterotroph'],
+ ['Venus flytrap (catches insects but has chloroplasts)','Autotroph']];
+const AHWHY={Autotroph:'It makes its own food by photosynthesis.',Heterotroph:'It has to eat other organisms for energy.'};
+const sortIt=(bank,opts,label,whyMap)=>()=>{ const [s,a]=pick(bank); return {q:s,a,choices:[...opts],fixed:true,label,why:whyMap?whyMap[a]:''}; };
+
+/* --- explain it --- */
+const EX=[
+ {q:'Describe the relationship between ATP and ADP.',ideas:[['ATP has 3 phosphates, ADP has 2',/(3|three|tri).{0,25}phosphate|phosphate.{0,25}(3|three)|(2|two|di).{0,25}phosphate/],['Removing a phosphate from ATP releases energy',/(lose|loses|remov|break|split|release).{0,40}(phosphate|energy)|energy.{0,20}released/],['ADP becomes ATP again when a phosphate + energy is added',/(add|adding|attach|gain).{0,40}phosphate|recharg/],['They form a cycle (like charging a battery)',/cycle|battery|back and forth|over and over|recharg/]],
+  model:'ATP has three phosphate groups and ADP has two. When the cell needs energy, ATP loses its third phosphate and becomes ADP, releasing energy. Then energy from cellular respiration adds a phosphate back to ADP, making ATP again. They go back and forth in a cycle, like a rechargeable battery.'},
+ {q:'Explain why ATP is important to the cell and what it does.',ideas:[['ATP is the cell’s usable energy source',/energy/],['Gives examples of work it powers (active transport, movement, making molecules)',/active transport|muscle|mov|protein|build|synthes|pump/],['Energy is released by breaking off a phosphate',/phosphate/]],
+  model:'ATP is the main energy molecule that cells use to do work. When ATP breaks off a phosphate and becomes ADP, it releases energy that powers things like active transport, muscle contraction, and building proteins. Without ATP, the cell couldn’t do any of the jobs that need energy.'},
+ {q:'Describe the relationship between ATP and glucose.',ideas:[['Glucose stores much more energy (long-term)',/(glucose).{0,60}(more|lots|store|long)|store.{0,30}glucose/],['Cellular respiration breaks down glucose to make ATP',/respiration|break.{0,20}glucose|glucose.{0,30}(broken|break)/],['One glucose makes about 36 ATP (aerobic)',/36|38|many atp|lots of atp/],['ATP is the small, usable form of energy',/usable|quick|small|spend|ready/]],
+  model:'Glucose stores a lot of energy for the long term, but the cell can’t use that energy directly. Cellular respiration breaks down glucose and uses its energy to make ATP, about 36 ATP per glucose with oxygen. ATP is the small, ready-to-use form of energy the cell spends.'},
+ {q:'Write out the overall equation of photosynthesis and explain it.',ideas:[['6CO₂ + 6H₂O on the reactant side',/6\s*co2.{0,15}6\s*h2o|6\s*h2o.{0,15}6\s*co2|carbon dioxide.{0,25}water/],['C₆H₁₂O₆ + 6O₂ on the product side',/c6h12o6.{0,15}6\s*o2|glucose.{0,25}oxygen/],['Light energy drives it',/light|sun/]],
+  model:'6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂. Plants use light energy to turn carbon dioxide and water into glucose (food) and release oxygen.'},
+ {q:'Describe where photosynthesis takes place.',ideas:[['In the chloroplasts',/chloroplast/],['Mostly in leaf cells of plants (also algae, some bacteria)',/leaf|leaves|plant|algae/],['Chlorophyll captures the light',/chlorophyll|pigment/],['Light reactions in thylakoids, Calvin cycle in stroma',/thylakoid|stroma|grana|granum/]],
+  model:'Photosynthesis takes place in the chloroplasts, mostly in the cells of plant leaves (and in algae and some bacteria). Chlorophyll in the thylakoid membranes captures light for the light-dependent reactions, and the Calvin cycle builds glucose in the stroma.'},
+ {q:'Write out the overall equation of cellular respiration and explain it.',ideas:[['C₆H₁₂O₆ + 6O₂ on the reactant side',/c6h12o6.{0,15}6\s*o2|glucose.{0,25}oxygen/],['6CO₂ + 6H₂O on the product side',/6\s*co2.{0,15}6\s*h2o|carbon dioxide.{0,25}water/],['Releases energy as ATP',/energy|atp/]],
+  model:'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP). Cells break down glucose using oxygen, releasing carbon dioxide and water and storing the energy as ATP. It’s the reverse of photosynthesis.'},
+ {q:'Describe the difference between aerobic and anaerobic respiration.',ideas:[['Aerobic uses oxygen; anaerobic doesn’t',/(aerobic).{0,40}oxygen|oxygen.{0,40}(aerobic)|without oxygen|no oxygen/],['Aerobic makes about 36 ATP; anaerobic makes 2',/36|38/],['Aerobic is in the mitochondria; anaerobic is in the cytoplasm',/mitochondri|cytoplasm/],['Anaerobic uses fermentation (lactic acid or alcohol)',/ferment|lactic|alcohol/]],
+  model:'Aerobic respiration uses oxygen. It breaks glucose down completely in the mitochondria and makes about 36 ATP. Anaerobic respiration happens without oxygen in the cytoplasm, using glycolysis and fermentation. It only makes 2 ATP and produces lactic acid (in muscles) or alcohol and CO₂ (in yeast).'}];
+function explainSetup(){
+  let i=store.get('exI',0); if(i>=EX.length) i=0; const drafts=store.get('exD',{});
+  $('#ex-chips').innerHTML='';
+  function render(state){ const e=EX[i]; $('#ex-count').textContent=`${i+1} of ${EX.length}`;
+    let fb='';
+    if(state){ const t=clean(drafts[i]||'').replace(/[₀-₉]/g,d=>SUB[d]); const hits=e.ideas.map(([,re])=>re.test(t)); const n=hits.filter(Boolean).length;
+      fb=`<div class="fb ${n===hits.length?'ok':n>=Math.ceil(hits.length/2)?'mid':'no'}"><strong>${n} of ${hits.length} key ideas found</strong><div class="ideas">${e.ideas.map(([l],k)=>`<div class="idea ${hits[k]?'hit':'miss'}"><i>${hits[k]?'✓':'✗'}</i><span>${l}</span></div>`).join('')}</div></div><div class="model"><b>Model answer:</b> ${e.model}</div><p class="tip">The checker looks for key words, so read the model answer to see if you really covered each idea.</p>`; }
+    $('#ex-card').innerHTML=`<div class="card"><p class="label">Objective ${i+1}</p><p class="q">${e.q}</p><label for="ex-in" style="position:absolute;left:-9999px">Your answer</label><textarea id="ex-in" placeholder="Explain it in your own words, like you would on the test.">${esc(drafts[i]||'')}</textarea>${fb}
+      <div class="row"><button class="btn primary" id="ex-check">Check my answer</button><button class="btn" id="ex-prev">Previous</button><button class="btn" id="ex-next">Next</button></div></div>`;
+    const ta=$('#ex-in'); ta.oninput=()=>{ drafts[i]=ta.value; store.set('exD',drafts); };
+    $('#ex-check').onclick=()=>{ if(!ta.value.trim()){ ta.focus(); return; } render(true); };
+    $('#ex-prev').onclick=()=>{ i=(i-1+EX.length)%EX.length; store.set('exI',i); render(false); };
+    $('#ex-next').onclick=()=>{ i=(i+1)%EX.length; store.set('exI',i); render(false); }; }
+  render(false); }
+
+/* ================= LEARN ================= */
+const vocRows=VOCAB.map(v=>`<div class="def"><b>${esc(v[0])}${v[3]?'':'<span class="extra">extra</span>'}</b><span>${esc(v[1])}</span></div>`).join('');
+$('#learn').innerHTML=`
+<div class="card atp"><h2>ATP and ADP</h2>
+<p>ATP (adenosine <b>tri</b>phosphate) has <b>3</b> phosphates. ADP (adenosine <b>di</b>phosphate) has <b>2</b>. The energy is stored in the bond holding the last phosphate.</p>
+<svg viewBox="0 0 560 150" role="img" aria-label="ATP molecule model">
+  <rect x="10" y="45" width="130" height="60" rx="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="75" y="81" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">Adenosine</text>
+  <line x1="140" y1="75" x2="175" y2="75" stroke="var(--muted)" stroke-width="3"/>
+  <circle cx="205" cy="75" r="30" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="2"/><text x="205" y="85" text-anchor="middle" font-size="28" font-weight="700" fill="var(--ink)">P</text>
+  <line x1="235" y1="75" x2="270" y2="75" stroke="var(--muted)" stroke-width="3"/>
+  <circle cx="300" cy="75" r="30" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="2"/><text x="300" y="85" text-anchor="middle" font-size="28" font-weight="700" fill="var(--ink)">P</text>
+  <g class="p3" id="p3">
+    <line x1="330" y1="75" x2="365" y2="75" stroke="var(--warm)" stroke-width="3" stroke-dasharray="5 3"/>
+    <text x="347" y="60" text-anchor="middle" font-size="18" fill="var(--warm)">⚡</text>
+    <circle cx="395" cy="75" r="30" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="2"/><text x="395" y="85" text-anchor="middle" font-size="28" font-weight="700" fill="var(--ink)">P</text>
+  </g>
+  <text id="burst" x="495" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="var(--warm)" opacity="0">+ energy!</text>
+</svg>
+<p style="text-align:center">Right now: <span class="state" id="atpState">ATP (charged, 3 phosphates)</span></p>
+<div class="row" style="justify-content:center"><button class="btn primary" id="useAtp">Use the energy</button><button class="btn" id="chargeAtp">Recharge with respiration</button></div>
+<ul><li><b>Using energy:</b> ATP → ADP + P + <b>energy</b> (the cell spends it on work like active transport, muscle movement, and making proteins).</li>
+<li><b>Recharging:</b> ADP + P + energy from glucose → ATP. That energy comes from <b>cellular respiration</b>.</li>
+<li>Think of ATP as a <b>charged battery</b> and ADP as a <b>drained battery</b>.</li></ul></div>
+
+<div class="card"><h2>ATP and glucose</h2>
+<p><b>Glucose</b> is like a big bank account: it stores a lot of energy for the long term. <b>ATP</b> is like cash in your pocket: small amounts the cell can spend right away.</p>
+<p>Cells can’t use glucose’s energy directly. <b>Cellular respiration</b> breaks glucose down and uses its energy to make ATP: about <b>36 ATP</b> per glucose with oxygen, or just <b>2 ATP</b> without oxygen.</p></div>
+
+<div class="card"><h2>Photosynthesis</h2>
+<div class="bigeq">6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂<small>carbon dioxide + water + light energy → glucose + oxygen</small></div>
+<h3>Where it happens</h3>
+<svg viewBox="0 0 520 210" role="img" aria-label="Chloroplast diagram" style="width:100%;max-width:520px;display:block;margin:0 auto">
+  <ellipse cx="230" cy="105" rx="210" ry="85" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="3"/>
+  ${[110,190,270,350].map(x=>[0,1,2,3].map(k=>`<rect x="${x-24}" y="${74+k*16}" width="48" height="12" rx="6" fill="var(--accent)" opacity=".85"/>`).join('')).join('')}
+  <line x1="350" y1="70" x2="455" y2="40" stroke="var(--muted)"/><text x="458" y="44" font-size="14" fill="var(--ink)">Thylakoid stack</text>
+  <text x="458" y="60" font-size="12" fill="var(--muted)">light reactions</text>
+  <line x1="230" y1="165" x2="455" y2="175" stroke="var(--muted)"/><text x="458" y="172" font-size="14" fill="var(--ink)">Stroma</text>
+  <text x="458" y="188" font-size="12" fill="var(--muted)">Calvin cycle</text>
+  <text x="230" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Chloroplast</text>
+</svg>
+<ul><li>In the <b>chloroplasts</b> of plant cells, mostly in <b>leaves</b> (also algae and some bacteria).</li>
+<li><b>Chlorophyll</b> (green pigment) captures the light.</li>
+<li><b>Light-dependent reactions</b> in the <b>thylakoids</b>: light splits water, releases O₂, makes ATP and NADPH.</li>
+<li><b>Calvin cycle</b> in the <b>stroma</b>: uses ATP, NADPH, and CO₂ to build glucose.</li></ul></div>
+
+<div class="card"><h2>Cellular respiration</h2>
+<div class="bigeq">C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP)<small>glucose + oxygen → carbon dioxide + water + energy</small></div>
+<ul><li><b>Glycolysis</b> in the <b>cytoplasm</b>: glucose → 2 pyruvic acid, 2 ATP. No oxygen needed.</li>
+<li><b>Krebs cycle</b> in the <b>mitochondria</b>: releases CO₂.</li>
+<li><b>Electron transport chain</b> in the mitochondria: uses O₂ and makes most of the ATP.</li>
+<li>Done by almost all living things, <b>including plants</b>.</li></ul>
+<h3>They’re opposites</h3>
+<div class="tw"><table><tr><th></th><th>Photosynthesis</th><th>Cellular respiration</th></tr>
+<tr><td>Where</td><td>Chloroplasts</td><td>Mitochondria (+ cytoplasm)</td></tr>
+<tr><td>Reactants</td><td>CO₂, H₂O, light</td><td>Glucose, O₂</td></tr>
+<tr><td>Products</td><td>Glucose, O₂</td><td>CO₂, H₂O, ATP</td></tr>
+<tr><td>Energy</td><td>Stores energy in glucose</td><td>Releases energy as ATP</td></tr>
+<tr><td>Who</td><td>Autotrophs (plants, algae)</td><td>Almost all organisms</td></tr></table></div></div>
+
+<div class="card"><h2>Aerobic vs. anaerobic respiration</h2>
+<div class="tw"><table><tr><th></th><th>Aerobic</th><th>Anaerobic</th></tr>
+<tr><td>Oxygen?</td><td>Yes</td><td>No</td></tr>
+<tr><td>Where</td><td>Mitochondria (after glycolysis)</td><td>Cytoplasm</td></tr>
+<tr><td>Steps</td><td>Glycolysis → Krebs cycle → electron transport chain</td><td>Glycolysis → fermentation</td></tr>
+<tr><td>ATP per glucose</td><td>About 36</td><td>2</td></tr>
+<tr><td>Products</td><td>CO₂ + H₂O</td><td>Lactic acid (muscles) or alcohol + CO₂ (yeast)</td></tr>
+<tr><td>Example</td><td>Jogging, normal breathing</td><td>Sprinting (muscle burn), bread rising</td></tr></table></div></div>
+
+<div class="card"><h2>Vocabulary</h2><p class="tip">Terms marked <span class="extra">extra</span> aren’t on your objective sheet but show up in Chapters 8 and 9.</p>${vocRows}</div>`;
+(function atpModel(){ let charged=true; const p3=$('#p3'), b=$('#burst'), st=$('#atpState');
+  const draw=()=>{ p3.style.transform=charged?'none':'translate(60px,40px)'; p3.style.opacity=charged?1:.35; b.setAttribute('opacity',charged?0:1);
+    st.textContent=charged?'ATP (charged, 3 phosphates)':'ADP + P (energy released, 2 phosphates left)'; };
+  $('#useAtp').onclick=()=>{ charged=false; draw(); }; $('#chargeAtp').onclick=()=>{ charged=true; draw(); }; draw(); })();
+
+/* ================= build tabs ================= */
+const D={};
+D.mc=drill('mc',{mix:{label:'Mix',fn:()=>null},atp:{label:'ATP & ADP',fn:fromBank('atp')},ph:{label:'Photosynthesis',fn:fromBank('ph')},rs:{label:'Respiration',fn:fromBank('rs')},an:{label:'Aerobic vs anaerobic',fn:fromBank('an')},voc:{label:'Vocab',fn:vocabMC}});
+D.vocab=drill('vocab',{core:{label:'Objective-sheet terms',fn:vocabTyped(true)},all:{label:'All terms',fn:vocabTyped(false)}});
+D.eq=drill('eq',{full:{label:'Write photosynthesis',fn:eqFull('ph')},fullr:{label:'Write respiration',fn:eqFull('rs')},blank:{label:'Fill the blank',fn:eqBlank},word:{label:'Word equations',fn:eqWord},mc:{label:'Recognize it',fn:eqMC},mix:{label:'Mix',fn:()=>null}});
+D.sort=drill('sort',{pr:{label:'Photosynthesis or respiration',fn:sortIt(SORT_PR,PR,'Photosynthesis, respiration, or both?')},an:{label:'Aerobic or anaerobic',fn:sortIt(SORT_AN,AN,'Aerobic or anaerobic?')},ah:{label:'Autotroph or heterotroph',fn:sortIt(SORT_AH,AH,'Autotroph or heterotroph?',AHWHY)},mix:{label:'Mix',fn:()=>null}});
+explainSetup();
+
+const TABS=['learn','mc','vocab','eq','sort','explain'];
+function showTab(t){ TABS.forEach(x=>{ $('#pane-'+x).hidden=x!==t; $('#tab-'+x).setAttribute('aria-selected',x===t); }); store.set('tab',t); ACTIVE=D[t]||null;
+  const f=document.querySelector('#pane-'+t+' input[type=text]:not([readonly])'); if(f) f.focus(); }
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.addEventListener('keydown',e=>{ if(ACTIVE) ACTIVE.onKey(e); });
+Object.values(D).forEach(d=>d.next());
+const t0=store.get('tab','learn'); showTab(TABS.includes(t0)?t0:'learn');
+</script>
+</body></html>
